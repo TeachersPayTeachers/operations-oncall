@@ -49,7 +49,7 @@ def get_user(schedule_id):
         logger.critical("ABORT: Not a valid schedule: {}".format(schedule_id))
         return False
     try:
-        username = normal.json()['users'][0]['name']
+        username = normal.json()['users'][0]['email']
         # Check for overrides
         # If there is *any* override, then the above username is an override
         # over the normal schedule. The problem must be approached this way
