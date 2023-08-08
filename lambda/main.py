@@ -107,7 +107,7 @@ def get_chat_user(chat_provider_name, pd_email, pd_name):
 
 def get_slack_user(email, name):
     payload = {}
-    payload['token'] = boto3.client('ssm').get_parameters(
+    token = boto3.client('ssm').get_parameters(
         Names=[os.environ['SLACK_API_KEY_NAME']],
         WithDecryption=True)['Parameters'][0]['Value']
     payload['email'] = email
@@ -120,7 +120,7 @@ def get_slack_user(email, name):
         'name': name
     }
 
-    r = requests.get('https://slack.com/api/users.lookupByEmail', payload)
+    r = requests.get('https://slack.com/api/users.lookupByEmail', payload, {"Authorization": "Bearer %s" %token})
     rjson = r.json()
     if not rjson['ok']:
         if rjson['error'] == 'users_not_found':
@@ -136,12 +136,12 @@ def get_slack_user(email, name):
 
 def get_slack_topic(channel):
     payload = {}
-    payload['token'] = boto3.client('ssm').get_parameters(
+    token = boto3.client('ssm').get_parameters(
         Names=[os.environ['SLACK_API_KEY_NAME']],
         WithDecryption=True)['Parameters'][0]['Value']
     payload['channel'] = channel
     try:
-        r = requests.post('https://slack.com/api/conversations.info', data=payload)
+        r = requests.post('https://slack.com/api/conversations.info', payload, {"Authorization": "Bearer %s" %token})
         current = r.json()['channel']['topic']['value']
         logger.debug("Current Topic: '{}'".format(current))
     except KeyError:
@@ -160,7 +160,7 @@ def update_slack_topic(channel, proposed_update):
         proposed_update)
     )
     payload = {}
-    payload['token'] = boto3.client('ssm').get_parameters(
+    token = boto3.client('ssm').get_parameters(
         Names=[os.environ['SLACK_API_KEY_NAME']],
         WithDecryption=True)['Parameters'][0]['Value']
     payload['channel'] = channel
@@ -191,7 +191,7 @@ def update_slack_topic(channel, proposed_update):
         if len(topic) > 250:
             topic = topic[0:247] + "..."
         payload['topic'] = topic
-        r = requests.post('https://slack.com/api/conversations.setTopic', data=payload)
+        r = requests.post('https://slack.com/api/conversations.setTopic', payload, {"Authorization": "Bearer %s" %token})
         logger.debug("Response for '{}' was: {}".format(channel, r.json()))
     else:
         logger.info("Not updating slack, topic is the same")
@@ -205,12 +205,12 @@ def update_chat_group(chat_provider_name, chat_group, chat_user_ids):
 
 def update_slack_group(group_id, user_ids):
     payload = {}
-    payload['token'] = boto3.client('ssm').get_parameters(
+    token = boto3.client('ssm').get_parameters(
         Names=[os.environ['SLACK_API_KEY_NAME']],
         WithDecryption=True)['Parameters'][0]['Value']
     payload['usergroup'] = group_id
     payload['users'] = ','.join(user_ids)
-    requests.post('https://slack.com/api/usergroups.users.update', data=payload)
+    requests.post('https://slack.com/api/usergroups.users.update', data=payload, headers={"Authorization": "Bearer %s" %token})
 
 
 def figure_out_schedule(s):
