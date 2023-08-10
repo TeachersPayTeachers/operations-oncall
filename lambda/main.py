@@ -120,7 +120,7 @@ def get_slack_user(email, name):
         'name': name
     }
 
-    r = requests.get('https://slack.com/api/users.lookupByEmail', payload, {"Authorization": "Bearer %s" %token})
+    r = requests.get('https://slack.com/api/users.lookupByEmail', params=payload, headers={"Authorization": "Bearer %s" %token})
     rjson = r.json()
     if not rjson['ok']:
         if rjson['error'] == 'users_not_found':
